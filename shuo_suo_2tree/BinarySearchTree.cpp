@@ -200,7 +200,55 @@ public:
         return _InsertR(_root, key);
     }
 
+    // 默认构造函数-----由于我们下面写了构造函数（拷贝构造函数），所以编译器就不会自动生成默认构造函数了
+    // 所以我们这里要写一个默认构造函数了，但是我们的成员变量已经给了缺省值，所以我可以直接这样写：
+    BSTree() {} // 它会用缺省值去初始化
+
+    // 或者也可以这样写：
+    //  BSTree() = default; // 代表强制生成默认构造函数
+
+    // 析构函数
+    ~BSTree()
+    {
+        Destroy(_root);
+    }
+
+    // 拷贝构造函数
+    BSTree(const BSTree<K> &t)
+    {
+        _root = Copy(t._root);
+    }
+
+    // 赋值,重载运算符，=
+    BSTree<K> &operator=(BSTree<K> t)
+    {
+        swap(_root, t._root);
+        return *this;
+    }
+
 private:
+    // 拷贝构造函数
+    Node *Copy(Node *root)
+    {
+        if (root == nullptr)
+            return nullptr;
+        Node *newRoot = new Node(root->_key);
+        newRoot->_left = Copy(root->_left);
+        newRoot->_right = Copy(root->_right);
+        return newRoot;
+    }
+    // 析构函数
+    void Destroy(Node *&root)
+    {
+        if (root == nullptr)
+            return;
+
+        Destroy(root->_left);
+        Destroy(root->_right);
+        delete root;
+        root = nullptr;
+    }
+
     // 递归的删除函数的写法 Erase
     bool _EraseR(Node *&root, const K &key)
     {
@@ -318,6 +366,33 @@ private:
     Node *_root = nullptr;
 };
 
+// int main()
+//{
+//     int a[] = {8, 3, 1, 10, 6, 4, 7, 14, 13};
+//     BSTree<int> bt; // 定义一个二叉搜索树
+//     for (auto e : a)
+//     {
+//         bt.InsertR(e); // 使用插入操作
+//     }
+//     bt.InOrder();
+//     bt.EraseR(14);
+//     bt.InOrder();
+//
+//     bt.EraseR(8);
+//     bt.InOrder();
+//
+//     bt.EraseR(3);
+//     bt.InOrder();
+//
+//     for (auto e : a)
+//     {
+//
+//         bt.EraseR(e);
+//         bt.InOrder();
+//     }
+//     return 0;
+// }
+
 int main()
 {
     int a[] = {8, 3, 1, 10, 6, 4, 7, 14, 13};
@@ -327,20 +402,6 @@ int main()
         bt.InsertR(e); // 使用插入操作
     }
     bt.InOrder();
-    bt.EraseR(14);
-    bt.InOrder();
-
-    bt.EraseR(8);
-    bt.InOrder();
-
-    bt.EraseR(3);
-    bt.InOrder();
-
-    for (auto e : a)
-    {
-
-        bt.EraseR(e);
-        bt.InOrder();
-    }
-    return 0;
+    BSTree<int> copy(bt);
+    copy.InOrder();
 }
