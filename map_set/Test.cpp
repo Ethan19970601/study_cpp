@@ -1,5 +1,6 @@
 #include <iostream>
 #include <set>
+#include <map>
 using namespace std;
 
 void test_set1()
@@ -107,8 +108,8 @@ void test_set4()
     }
     cout << endl;
 
-   // auto ret = s.equal_range(2);
-   // s.erase(ret.first, ret.second);
+    // auto ret = s.equal_range(2);
+    // s.erase(ret.first, ret.second);
     s.erase(2);
     for (auto e : s)
     {
@@ -117,11 +118,41 @@ void test_set4()
     cout << endl;
 }
 
+void test_map1()
+{
+    map<string, string> dict;
+
+    dict.insert(pair<string, string>("sort", "排序"));
+    dict.insert(pair<string, string>("insert", "插入"));
+    dict.insert(pair<string, string>("left", "左边"));
+    dict.insert(make_pair("right", "右边"));
+    dict.insert(make_pair("left", "左边"));
+    // 迭代器遍历
+    map<string, string>::iterator it = dict.begin();
+    while (it != dict.end())
+    {
+        cout << (*it).first << ":";
+        cout << (*it).second << endl;
+        ++it;
+    }
+    cout << endl;
+
+    // 范围 for遍历
+    for (const auto &kv : dict)
+    {
+        cout << kv.first << ":" << kv.second << endl;
+    }
+}
+
+void test_map2() // 用 map 来统计次数
+{
+
+    string arr[] = {"苹果", "西瓜", "苹果", "西瓜", "苹果", "苹果", "苹果", "西瓜", "苹果", "香蕉", "苹果", "香蕉"};
+}
+
 int main()
 {
-    // test_set1();
-    // test_set2();
-    // test_set3();
-    test_set4();
+    test_map1();
+    test_map2();
     return 0;
 }
