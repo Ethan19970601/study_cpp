@@ -144,15 +144,60 @@ void test_map1()
     }
 }
 
-void test_map2() // 用 map 来统计次数
+void test_map2() // 用 map 来统计水果出现的次数
 {
-
+    // 这个数组里面装的水果
     string arr[] = {"苹果", "西瓜", "苹果", "西瓜", "苹果", "苹果", "苹果", "西瓜", "苹果", "香蕉", "苹果", "香蕉"};
+    // 用这个 map 类型的 countMap 来统计水果出现的次数
+    map<string, int> countMap;
+
+    // 第一种写法
+    //    for (auto &str : arr) // 用范围for来遍历这个数组
+    //    {
+    //        auto ret = countMap.find(str); // ret 是 find 函数的返回值是一个迭代器
+    //        if (ret == countMap.end()) // 满足这个条件说明 map 中没有这个水果，所以我们要插入
+    //        {
+    //            countMap.insert(make_pair(str, 1)); // 由于是第一次出现，所以 value 的值我们给 1 。
+    //        }
+    //        else
+    //        {
+    //            ret->second++; // 如果是 else，说明 map 中已经有了对应的水果了，这个时候我们要对它的数量加加
+    //        }
+    //    }
+    //
+
+    for (auto str : arr)
+    {
+
+        countMap[str]++;
+    }
+
+    for (auto kv : countMap)
+    {
+        cout << kv.first << "出现了 " << kv.second << "次" << endl;
+    }
+}
+
+void test_map3()
+{
+    map<string, string> dict;
+    // 插入
+    dict["erase"];
+    // 查找
+    cout << dict["erase"] << endl;
+    // 修改
+    dict["erase"] = "删除";
+    // 查找
+    cout << dict["erase"] << endl;
+    // 修改
+    dict["test"] = "测试";
+    dict["left"] = "左边、剩余";
 }
 
 int main()
 {
-    test_map1();
-    test_map2();
+    // test_map1();
+    // test_map2();
+    test_map3();
     return 0;
 }
