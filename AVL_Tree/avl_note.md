@@ -88,3 +88,96 @@ AVL是他们姓氏的首字母缩写。
 ### ❓ 为什么是不超过 1 呢？
 
 AVL 树 叫做高度平衡二叉搜索树，它是通过高度来平衡的，它要求左右子树的高度差不超过 1 ，那为什么是相等呢？ 因为有些数量下我们是做不到左右节点高度差相等的，但是我们可以做到高度差不超过 1
+
+## 📌 实现 AVL 树
+
+### ✏️ AVLTree.h
+
+```c++
+
+template <class K, class V>
+struct AVLTreeNote
+{
+    AVLTreeNote<K, V> *_left;
+    AVLTreeNote<K, V> *_right;
+    AVLTreeNote<K, V> *_parent;
+    pair<K, V> _kv;
+    int _bf; // balance factor 平衡因子
+};
+
+template <class K, class V>
+class AVLTree
+{
+    typedef AVLTreeNote<K, V> Node; // 这个写起来有点长，我们取个新的名字
+
+public:
+    // 插入：
+    bool Insert(const pair<K, V> &kv)
+    {
+        if (_root == nullptr)
+        {
+            _root = new Node(kv);
+            return true;
+        }
+        else
+        {
+            Node *parent = nullptr;
+            Node *cur = _root;
+            while (cur)
+            {
+                if (cur->_kv.first < key) // 如果要插入的值 key 大于当前节点值的值，我们往右子树走
+                {
+                    parent = cur;
+                    cur = cur->_right;
+                }
+                else if (cur->_kv.first > key) // 如果要插入的值 key 小于当前节点值 我们就往左子树走
+                {
+                    parent = cur;
+                    cur = cur->_left;
+                }
+                else // 如果相等就不让插入
+                {
+                    return false;
+                }
+            }
+            // 当我们把 while 循环走完之后，我们就走到了要插入的地方了
+            cur = new Node(kv); // new 一个节点出来
+            if (parent->_kv.first < key)
+            {
+                parent->_right = cur;
+                cur->_parent = parent;
+            }
+            else
+            {
+                parent->_left = cur;
+                cur->_parent = parent;
+            }
+   // *****************************
+            return ture;
+        }
+    }
+
+private:
+    Node *_root = nullptr; // 定义根节点
+};
+
+```
+
+❓ 思考，如果我们插入了一个新的节点，那我们该如何来更新平衡因子？
+
+- 父节点的平衡因子应该怎么更新
+ 如果我插入的是结点`cur` 是插入到父节点的左边的，那么根据平衡因子的公式：`右树高度-左树高度` 此时左树的高度由于我的插入而增加`1` 导致公式的结果会减少 `1`。所以这种情况下父节点的平衡因子应该`-1`
+ 
+ 同理：如果我插入的结点在右边，那么插入结点的父节点的平衡因子应该 `+1`
+ 
+- 注意：新增一个结点可能会影响到的是此节点的祖先的平衡因子
+ 那如何判断这个新增节点会不会影响祖先节点的平衡因子呢？
+  - 如果子树的高度变化，就会向上影响祖先的平衡因子
+  - 如果子树的高度不变，就不会向上影响祖先的平衡因子
+- 新插入的结点的平衡因子 = 0， 因为新插入的结点都是叶子结点
+- 总结如下：
+ 	- 1. 父节点的`bf` (平衡因子）如果在插入结点后变成了 `0`，即：bf == 0，不用继续往上更新了，插入结束。
+  		- 原因：插入之后变成 0 了，说明插入之前的 bf = -1 或者 bf = 1，插入的位置刚好把高度低的那棵树补平了，子树的高度没有反生变化所以不会影响到祖先结点
+ 	- 2. 父节点的平衡因子`bf`，如果在插入之后变成了 `-1, 1`，即 bf == -1 || bf == 1，则要继续往上更新。
+  		- 原因：插入之后变成 -1 或者 1， 说明插入之前的 bf == 0 ，即：左右子树的高度是相等的，现在你插入了一个结点，让子树的高度发生了变化，所以会影响祖先结点的平衡因子，所以我们要继续往上更新
+ 	- 3. 父节点的平衡因子更新后变成了`-2 或者 2`，更加不行，这都违反了AVL树的规则，继续向上跟新
