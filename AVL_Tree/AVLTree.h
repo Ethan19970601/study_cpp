@@ -77,14 +77,29 @@ public:
                     cur = parent;
                     parent = parent->_parent;
                 }
-                else // 走到这里说明平衡因子 _bf!= 0 || _bf != 1 ||  _bf != -1, 出问题了,需要旋转治疗一下了。
+                else if (parent->_bf == 2 || parent->_bf == -2)
+                // 走到这里说明平衡因子 _bf!= 0 || _bf != 1 ||  _bf != -1, 出问题了,需要旋转治疗一下了。
                 {
                     // 旋转
+                }
+                else
+                {
+                    assert(false); // 断言,走到这一步说明之前的代码肯定是有问题的，说明插入之前就不是平衡的，所以我们在这里断言，如果代码走到这一步，我们就要好好检查一下我们之前的代码
                 }
             }
 
             return ture;
         }
+    }
+
+    void RotateL(Node *parent) // 左单旋转代码,新插入的结点是 RR 型
+    {
+        Node *subR = parent->_right;
+        Node *subRL = subR->_left;
+
+        // 开始旋转,看着图来理解下面的代码，或者自己画一下图
+        parent->_right = subRL;
+        subR->_left = parent;
     }
 
 private:
