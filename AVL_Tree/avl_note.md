@@ -321,4 +321,71 @@ else
 }
 ```
 
+本步骤完整代码展示：
+
+```c
+
+void RotateL(Node *parent) // 左单旋转代码,新插入的结点是 RR 型
+    {
+        Node *subR = parent->_right;
+        Node *subRL = subR->_left;
+        Node *parentParent = parent->_parent; // 把它的父节点先记录下来
+        // 开始旋转,看着图来理解下面的代码，或者自己画一下图
+        parent->_right = subRL;
+        subR->_left = parent;
+        // 处理parent
+        parent->_parent = subR;
+        if (subRL) // subRL 不是空指针才行
+        {
+            subRL->_parent = parent;
+        }
+
+        // 处理根
+        if (_root == parent)
+        {
+            _root = subR;
+            subR->_parent = nullptr;
+        }
+        else 
+        {    
+            if (parentParent->_left == parent)
+            {
+                parentParent->_left = subR;
+            }
+            else if (parentParent->_right == parent)
+            {
+                parentParent->_right = subR;
+            }
+            subR->_parent = parentParent;
+        }
+    }
+
+```
+
 ###### ==最后一个步骤更新平衡因子==
+
+到这一步的时候我们的左旋已经结束了，平衡因子也应该做适当的更新，我们可以观察图形：
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/aeac2de93aec4cffbc907be54e909a0d.png)
+
+通过图形我们可以知道，`subR` 和`parent` 的平衡因子都变成了 0 ，所以我们的代码如下：
+
+```c
+parent->_bf = subR->_bf = 0;
+```
+
+#### 📎 插入的结点是 LL 型 - 左（L）子树的左（L）孩子
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/a272625d7fd343c7b28436a3ca36e867.png)
+
+我们观察插入节点前后的变化：
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/84afa1a06e124d93b796a5e3d54a7b0a.png)
+
+##### ==解决办法：右旋==
+
+观察图形我们可以知道，失去平衡的结点是**14** ，它的平衡因子由-1 变成了 -2，我们想到的办法是让 14 这个结点向右旋转（即：顺时针旋转），让 14 这个节点转下来，让 14 这个节点成为节点 6 的右孩子，但是节点 6 之前就已经有了右孩子 9，这个时候就冲突了，我们的做法是让节点 9 成为节点 14 的左孩子。如图：
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/a8a8540dcf474c96a79d503c50dcaee0.png)
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/7beaf8a9a1e44d2883a429c797399ba9.png)

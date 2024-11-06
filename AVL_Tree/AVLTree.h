@@ -96,10 +96,36 @@ public:
     {
         Node *subR = parent->_right;
         Node *subRL = subR->_left;
-
+        Node *parentParent = parent->_parent; // 把它的父节点先记录下来
         // 开始旋转,看着图来理解下面的代码，或者自己画一下图
         parent->_right = subRL;
         subR->_left = parent;
+        // 处理parent
+        parent->_parent = subR;
+        if (subRL) // subRL 不是空指针才行
+        {
+            subRL->_parent = parent;
+        }
+
+        // 处理根
+        if (_root == parent)
+        {
+            _root = subR;
+            subR->_parent = nullptr;
+        }
+        else 
+        {    
+            if (parentParent->_left == parent)
+            {
+                parentParent->_left = subR;
+            }
+            else if (parentParent->_right == parent)
+            {
+                parentParent->_right = subR;
+            }
+            subR->_parent = parentParent;
+        }
+        parent->_bf = subRL->_bf = 0; // 更新平衡因子
     }
 
 private:
