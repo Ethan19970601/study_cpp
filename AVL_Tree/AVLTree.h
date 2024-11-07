@@ -113,8 +113,8 @@ public:
             _root = subR;
             subR->_parent = nullptr;
         }
-        else 
-        {    
+        else
+        {
             if (parentParent->_left == parent)
             {
                 parentParent->_left = subR;
@@ -126,6 +126,49 @@ public:
             subR->_parent = parentParent;
         }
         parent->_bf = subRL->_bf = 0; // 更新平衡因子
+    }
+
+    // 右旋代码，插入的节点是LL型，即：右子树的右结点
+    void RotateR(Node *parent)
+    {
+        // 先把我们要用的节点给定义出来
+        Node *subL = parent->_left;
+        Node *subLR = subL->_right;
+        Node *parentParent = parent->_parent;
+
+        // 然后开始右旋
+        parent->_left = subLR; // 先把结点 9 链接到结点 14 的左边，让节点 9 把位置给空出来
+        subL->_right = parent; // 然后就可以把结点 14 放入空的那个位置了
+
+        // 接下来我们同左旋一样，我们仍然要解决 2 个大问题：1. 根的问题（更新根） 2.parent 节点的问题
+        // 1. 根的问题
+        if (_root == parent) // 如果这个 parent 就是这整棵树的根了
+        {
+            _root = subL;
+            subL->_parent = nullptr;
+        }
+        else // 如果这个 parent 只是一个局部
+        {
+            // 如果它是一个局部的话，我们又要分两种情况来考虑：1.它是左子树 2. 它是右子树
+            subL->_parent = parentParent;
+            // 1. 他是左子树
+            if (parentParent->_left == parent)
+            {
+                parentParent->_left = subL;
+            }
+            // 2. 它是右子树
+            else if (parentParent->_right == parent)
+            {
+                parentParent->_right = subL;
+            }
+        }
+        // 2. 解决 parent 节点的问题,更新节点之前的父子关系
+        parent->_parent = subL;
+        if (subRL) // subRL 这个节点可能为空，所以我们要排除一下这种情况
+            subRL->_parent = parent;
+
+        // 最后更新平衡因子
+        subL->_bf = parent->_bf = 0;
     }
 
 private:
