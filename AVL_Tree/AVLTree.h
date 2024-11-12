@@ -81,6 +81,19 @@ public:
                 // 走到这里说明平衡因子 _bf!= 0 || _bf != 1 ||  _bf != -1, 出问题了,需要旋转治疗一下了。
                 {
                     // 旋转
+                    // 插入的结点如果是 RR 型
+                    if (parent->_bf == 2 && cur->_bf == 1)
+                    {
+                        RotateL(parent);
+                    }
+                    // 插入的结点如果是 LL 型
+                    else if (parent->_bf == -2 && cur->_bf == -1)
+                    {
+                        RotateR(parent);
+                    }
+                    
+                    // 旋转完成了，我们就可以退出了
+                    break;
                 }
                 else
                 {
