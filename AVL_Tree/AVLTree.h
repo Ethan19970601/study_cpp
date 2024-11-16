@@ -1,4 +1,4 @@
-
+#include <assert.h>
 template <class K, class V>
 struct AVLTreeNote
 {
@@ -29,12 +29,12 @@ public:
             Node *cur = _root;
             while (cur)
             {
-                if (cur->_kv.first < key) // 如果要插入的值 key 大于当前节点值的值，我们往右子树走
+                if (cur->_kv.first < kv.first) // 如果要插入的值 key 大于当前节点值的值，我们往右子树走
                 {
                     parent = cur;
                     cur = cur->_right;
                 }
-                else if (cur->_kv.first > key) // 如果要插入的值 key 小于当前节点值 我们就往左子树走
+                else if (cur->_kv.first > kv.first) // 如果要插入的值 key 小于当前节点值 我们就往左子树走
                 {
                     parent = cur;
                     cur = cur->_left;
@@ -46,7 +46,7 @@ public:
             }
             // 当我们把 while 循环走完之后，我们就走到了要插入的地方了
             cur = new Node(kv); // new 一个节点出来
-            if (parent->_kv.first < key)
+            if (parent->_kv.first < kv.first)
             {
                 parent->_right = cur;
                 cur->_parent = parent;
@@ -91,7 +91,18 @@ public:
                     {
                         RotateR(parent);
                     }
-                    
+
+                    // 插入的节点如果是 RL 型 --- 各个击破
+                    else if (parent->_bf == 2 && cur->_bf == -1)
+                    {
+                        Rotate_RL(parent); // 这个函数是用来先向右旋转，再向左旋转的
+                    }
+                    // 插入的节点是 LR 型
+                    else if (parent_bf == -2 && cur->_bf = 1)
+                    {
+                        Rotate_LR(parent);
+                    }
+
                     // 旋转完成了，我们就可以退出了
                     break;
                 }
@@ -101,7 +112,7 @@ public:
                 }
             }
 
-            return ture;
+            return true;
         }
     }
 
@@ -177,16 +188,81 @@ public:
         }
         // 2. 解决 parent 节点的问题,更新节点之前的父子关系
         parent->_parent = subL;
-        if (subRL) // subRL 这个节点可能为空，所以我们要排除一下这种情况
-            subRL->_parent = parent;
+        if (subLR) // subRL 这个节点可能为空，所以我们要排除一下这种情况
+            subLR->_parent = parent;
 
         // 最后更新平衡因子
         subL->_bf = parent->_bf = 0;
     }
 
+    // 右左双旋函数
+    void Rotate_RL(Node *parent)
+    {
+        Node *subR = parent->_right;
+        Node *subRL = subR->_left;
+        // 由于接下来会有单旋的操作，会改变我们的平衡因子，所以我们需要记录一下
+        int bf = subRL->_bf;
+
+        RotateR(parent->_right);
+        RotateL(parent);
+
+        if (bf == 0)
+        {
+            // subRL 本身就是被插入的那个节点
+            parent->_bf = subR->_bf = subRL->_bf = 0;
+        }
+        else if (bf == 1) // 新插入的节点在 subRL 的右子树
+        {
+            parent->_bf = -1; // 为啥事-1？ 画图可以帮助你的理解
+            subR->_bf = subRL = 0;
+        }
+        else if (bf == -1) // 新插入的节点在 subRL 的左子树
+        {
+            parent->_bf = 0;
+            subR->_bf = 1;
+            subRL->_bf = 0;
+        }
+        else
+        {
+            assert(false); // 只能是上面的 3 种情况，如果走到了这里就说明出问题了。
+        }
+    }
+
+    void Rotate_LR(Node* parent)
+    {
+        // ......
+        Node *subL = parent->_left;
+        Node *subLR = subL->_right;
+
+        RotateL(parent->_left);
+        RotateR(parent);
+
+        int bf = subLR->_bf;
+
+        if (bf == 0)
+        {
+            // subRL 本身就是被插入的那个节点
+            parent->_bf = subL->_bf = subLR->_bf = 0;
+        }
+        else if (bf == -1) // 新插入的节点在 subRL 的右子树
+        {
+            parent->_bf = -1; // 为啥事-1？ 画图可以帮助你的理解
+            subL->_bf = subLR = 0;
+        }
+        else if (bf == 1) // 新插入的节点在 subRL 的左子树
+        {
+            parent->_bf = 0;
+            subL->_bf = 1;
+            subLR->_bf = 0;
+        }
+        else
+        {
+            assert(false); // 只能是上面的 3 种情况，如果走到了这里就说明出问题了。
+        }
+    }
+
 private:
     Node *_root = nullptr; // 定义根节点
-}; 
+};
 
-//提交说明
-
+// 提交说明
