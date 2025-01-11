@@ -223,9 +223,31 @@ public:
 
     void RotateLR(Node *parent)
     {
-        //...
+        Node *subL = parent->_left;
+        Node *subLR = subL->_right;
+        int bf = subLR->_bf;
         RotateL(parent->_left);
         RotateR(parent);
+        if (bf == 0)
+        {
+            subL->_bf = subLR->_bf = parent->_bf = 0;
+        }
+        else if (bf == 1)
+        {
+            subL->_bf = -1;
+            subLR->_bf = 0;
+            parent->_bf = 0;
+        }
+        else if (bf == -1)
+        {
+            subL->_bf = 0;
+            subLR->_bf = 0;
+            parent->_bf = 1;
+        }
+        else
+        {
+            assert(false);
+        }
     }
 
     void InOrder()

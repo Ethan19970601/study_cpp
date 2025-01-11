@@ -67,11 +67,7 @@ AVL树的自平衡特性确保了树的高度不会变得过大，从而避免�
 
 ## 📌 AVL 树 ----- 为了解决搜索二叉树存在的问题
 
- 二叉搜索树虽可以缩短查找的效率，但如果数据有序或接近有序二叉搜索树将退化为单支树，查
-找元素相当于在顺序表中搜索元素，效率低下。因此，两位俄罗斯的数学家G.M.Adelson-Velskii
-和E.M.Landis在1962年发明了一种解决上述问题的方法：当向二叉搜索树中插入新结点后，如果能保证每个结点的左右子树高度之差的绝对值不超过1(需要对树中的结点进行调整)，即可降低树的高度，从而减少平均搜索长度。
-
-AVL是他们姓氏的首字母缩写。
+ 二叉搜索树虽可以缩短查找的效率，但如果数据有序或接近有序二叉搜索树将退化为单支树，查找元素相当于在顺序表中搜索元素，效率低下。因此，两位俄罗斯的数学家G.M.Adelson-Velskii和E.M.Landis在1962年发明了一种解决上述问题的方法：当向二叉搜索树中插入新结点后，如果能保证每个结点的左右子树高度之差的绝对值不超过1(需要对树中的结点进行调整)，即可降低树的高度，从而减少平均搜索长度。AVL是他们姓氏的首字母缩写。
 
 ### ✏️ 特点
 
@@ -484,3 +480,837 @@ RL 型的特征就是：失衡节点的平衡因子是 -2 ，它的右节点的�
 情况 3：
 其实还有最后一种情况，
 ![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/70b78a556cab4b41a05ebfed4dcab2b4.png)
+
+为了便于代码编写，我们可以给上面的节点命名：
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/3a4f7ed215804fa9bc198f0b040b7836.png)
+
+而且，我们可以通过 subRL 的平衡因子的值来区分我们上面说到的三种情况：
+
+1. 如果 subRL 的平衡因子等于 1， 那么新插入的结点是插入在 subRL 的右子树的
+2. 如果 subRL 的平衡因子等于 -1， 那么新插入的结点是插入在 subRL 的左子树的
+3. 如果 subRL 的平衡因子等于 0， 那么新插入的结点就是 subRL 本身
+
+根据上面的分析，我们来写代码：
+
+```c++
+    // 右左双旋函数
+    void Rotate_RL(Node *parent)
+    {
+        Node *subR = parent->_right;
+        Node *subRL = subR->_left;
+        // 由于接下来会有单旋的操作，会改变我们的平衡因子，所以我们需要记录一下
+        int bf = subRL->_bf;
+
+        RotateR(parent->_right);
+        RotateL(parent);
+
+        if (bf == 0)
+        {
+            // subRL 本身就是被插入的那个节点
+            parent->_bf = subR->_bf = subRL->_bf = 0;
+        }
+        else if (bf == 1) // 新插入的节点在 subRL 的右子树
+        {
+            parent->_bf = -1; // 为啥事-1？ 画图可以帮助你的理解
+            subR->_bf = subRL = 0;
+        }
+        else if (bf == -1) // 新插入的节点在 subRL 的左子树
+        {
+            parent->_bf = 0;
+            subR->_bf = 1;
+            subRL->_bf = 0;
+        }
+        else
+        {
+            assert(false); // 只能是上面的 3 种情况，如果走到了这里就说明出问题了。
+        }
+    }
+```
+
+我们现在来测试一下，当然，我们的代码还有一些地方没有写全 ，下面是补充了一些的代码，让程序可以运行起来，并不是最后的版本：
+Test.cpp
+
+```c++
+#include <iostream>
+#include <map>
+#include <vector>
+using namespace std;
+
+#include "AVLTree.h"
+
+int main()
+{
+    int a[] = {16, 3, 7, 11, 9, 26, 18, 14, 15};
+    AVLTree<int, int> t;
+    for (auto e : a)
+    {
+        t.Insert(make_pair(e, e));
+    }
+    t.InOrder();
+    return 0;
+}
+```
+
+AVL.h
+
+```c++
+#include <assert.h>
+
+template <class K, class V>
+struct AVLTreeNode
+{
+    AVLTreeNode<K, V> *_left;
+    AVLTreeNode<K, V> *_right;
+    AVLTreeNode<K, V> *_parent;
+    pair<K, V> _kv;
+
+    int _bf; // balance factor
+
+    AVLTreeNode(const pair<K, V> &kv)
+        : _left(nullptr), _right(nullptr), _parent(nullptr), _kv(kv), _bf(0)
+    {
+    }
+};
+
+template <class K, class V>
+class AVLTree
+{
+    typedef AVLTreeNode<K, V> Node;
+
+public:
+    bool Insert(const pair<K, V> &kv)
+    {
+        if (_root == nullptr)
+        {
+            _root = new Node(kv);
+            return true;
+        }
+
+        Node *parent = nullptr;
+        Node *cur = _root;
+
+        while (cur)
+        {
+            if (cur->_kv.first < kv.first)
+            {
+                parent = cur;
+                cur = cur->_right;
+            }
+            else if (cur->_kv.first > kv.first)
+            {
+                parent = cur;
+                cur = cur->_left;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        cur = new Node(kv);
+        if (parent->_kv.first < kv.first)
+        {
+            parent->_right = cur;
+            cur->_parent = parent;
+        }
+        else
+        {
+            parent->_left = cur;
+            cur->_parent = parent;
+        }
+
+        while (parent)
+        {
+            if (cur == parent->_left)
+            {
+                parent->_bf--;
+            }
+            else
+            {
+                parent->_bf++;
+            }
+
+            if (parent->_bf == 0)
+            {
+                break;
+            }
+            else if (parent->_bf == 1 || parent->_bf == -1)
+            {
+                cur = parent;
+                parent = parent->_parent;
+            }
+            else if (parent->_bf == 2 || parent->_bf == -2)
+            {
+                if (parent->_bf == 2 && cur->_bf == 1)
+                {
+                    RotateL(parent);
+                }
+                else if (parent->_bf == -2 && cur->_bf == -1)
+                {
+                    RotateR(parent);
+                }
+                else if (parent->_bf == 2 && cur->_bf == -1)
+                {
+                    RotateRL(parent);
+                }
+                else if (parent->_bf == -2 && cur->_bf == 1)
+                {
+                    RotateLR(parent);
+                }
+
+                // 1、旋转让这颗子树平衡了
+                // 2、旋转降低了这颗子树的高度，恢复到跟插入前一样的高度，所以对上一层没有影响，不用继续更新
+                break;
+            }
+            else
+            {
+                assert(false);
+            }
+        }
+
+        return true;
+    }
+
+    void RotateL(Node *parent)
+    {
+        Node *subR = parent->_right;
+        Node *subRL = subR->_left;
+
+        parent->_right = subRL;
+        subR->_left = parent;
+
+        Node *parentParent = parent->_parent;
+
+        parent->_parent = subR;
+        if (subRL)
+            subRL->_parent = parent;
+
+        if (_root == parent)
+        {
+            _root = subR;
+            subR->_parent = nullptr;
+        }
+        else
+        {
+            if (parentParent->_left == parent)
+            {
+                parentParent->_left = subR;
+            }
+            else
+            {
+                parentParent->_right = subR;
+            }
+
+            subR->_parent = parentParent;
+        }
+
+        parent->_bf = subR->_bf = 0;
+    }
+
+    void RotateR(Node *parent)
+    {
+        Node *subL = parent->_left;
+        Node *subLR = subL->_right;
+
+        parent->_left = subLR;
+        if (subLR)
+            subLR->_parent = parent;
+
+        Node *parentParent = parent->_parent;
+
+        subL->_right = parent;
+        parent->_parent = subL;
+
+        if (_root == parent)
+        {
+            _root = subL;
+            subL->_parent = nullptr;
+        }
+        else
+        {
+            if (parentParent->_left == parent)
+            {
+                parentParent->_left = subL;
+            }
+            else
+            {
+                parentParent->_right = subL;
+            }
+
+            subL->_parent = parentParent;
+        }
+
+        subL->_bf = parent->_bf = 0;
+    }
+
+    void RotateRL(Node *parent)
+    {
+        Node *subR = parent->_right;
+        Node *subRL = subR->_left;
+        int bf = subRL->_bf;
+
+        RotateR(parent->_right);
+        RotateL(parent);
+
+        if (bf == 0)
+        {
+            // subRL自己就是新增
+            parent->_bf = subR->_bf = subRL->_bf = 0;
+        }
+        else if (bf == -1)
+        {
+            // subRL的左子树新增
+            parent->_bf = 0;
+            subRL->_bf = 0;
+            subR->_bf = 1;
+        }
+        else if (bf == 1)
+        {
+            // subRL的右子树新增
+            parent->_bf = -1;
+            subRL->_bf = 0;
+            subR->_bf = 0;
+        }
+        else
+        {
+            assert(false);
+        }
+    }
+
+    void RotateLR(Node *parent)
+    {
+        //...
+        RotateL(parent->_left);
+        RotateR(parent);
+    }
+
+    void InOrder()
+    {
+        _InOrder(_root);
+        cout << endl;
+    }
+
+    void _InOrder(Node *root)
+    {
+        if (root == nullptr)
+            return;
+
+        _InOrder(root->_left);
+        cout << root->_kv.first << " ";
+        _InOrder(root->_right);
+    }
+
+private:
+    Node *_root = nullptr;
+};
+
+```
+
+运行上面的代码，我们可以看到我们的树。
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/bdbad7d702f644f398b016b017c357b4.png)
+
+我们的树是跑出来了，但是我们如何证明它是一颗平衡树呢？
+
+### 判断是不是一颗平衡树？
+
+我们可以通过写一个函数来判断
+
+```c++
+bool IsBalance()
+```
+
+这个函数的思路是：
+
+```c++
+// 首先，空树🌲是 avl 树
+        if (root == nullptr)
+            return true;
+```
+
+然后，我们计算左右字数的高度
+
+```c++
+// 计算左右子树的高度
+        int leftHeight = _Height(root->_left);
+        int rightHeight = _Height(root->_right);
+```
+
+同过`高度差`来判断它是不是一个平衡的数
+
+```c++
+// 计算左右的高度差 ，abs 是求绝对值的
+abs(leftHeight - rightHeight) < 2
+```
+
+然后我们再往下走下去，看看它的子树的子树是不是也是符合条件的，我们把这些条件写在一起就是：
+
+```c++
+        return abs(leftHeight - rightHeight) < 2 
+        && _IsBalance(root->_left)
+        && _IsBalance(root->_right)
+        ;
+```
+
+``Isbalance`` 函数代码第一版：
+
+```c++
+    bool _IsBalance(Node *root)
+    {
+        // 首先，空树🌲是 avl 树
+        if (root == nullptr)
+            return true;
+        // 计算左右子树的高度
+        int leftHeight = _Height(root->_left);
+        int rightHeight = _Height(root->_right);
+        // 计算左右的高度差 ，abs 是求绝对值的
+        return abs(leftHeight - rightHeight) < 2 && _IsBalance(root->_left) && _IsBalance(root->_right);
+    }
+```
+
+这个时候，通过上面的代码，树的平衡是没问题了，我们还可以顺便检查一下平衡因子`bf`，因为`bf`要是错了的话，在后面插入新的数据的时候也会影响树的平衡
+
+```c++
+        if (leftHeight - rightHeight != root->_bf)
+        {
+            cout << root->_kv.first << "平衡因子异常" << endl;
+            return false;
+        }
+```
+
+现在我们把代码加进去，`Isbalance` 函数第 2 版：
+
+```c++
+    bool _IsBalance(Node *root)
+    {
+        // 首先，空树🌲是 avl 树
+        if (root == nullptr)
+            return true;
+        // 计算左右子树的高度
+        int leftHeight = _Height(root->_left);
+        int rightHeight = _Height(root->_right);
+        //检查平衡因子
+        if (leftHeight - rightHeight != root->_bf)
+        {
+            cout << root->_kv.first << "平衡因子异常" << endl;
+            return false;
+        }
+        // 计算左右的高度差 ，abs 是求绝对值的
+        return abs(leftHeight - rightHeight) < 2 && _IsBalance(root->_left) && _IsBalance(root->_right);
+    }
+```
+
+好了，我们还没有写`IsBalance`中求高度的函数，现在我们来写这个`Height`函数
+
+```c++
+    int _Height(Node *root)
+    {
+        // 如果是空树，那么它的高度是 0
+        if (root == nullptr)
+            return 0;
+        // 分别求左右子树的高度
+        int leftHeight = _Height(root->_left);
+        int rightHeight = _Height(root->_right);
+        // 这棵树自己的高度 = 左右子树中高的那个 + 1
+        return leftHeight > rightHeight ? leftHeight + 1 : rightHeight + 1;
+    }
+
+```
+
+# 目前代码
+
+```c++
+// test.cpp
+#include <iostream>
+#include <map>
+#include <vector>
+using namespace std;
+
+#include "AVLTree.h"
+
+int main()
+{
+    int a[] = {16, 3, 7, 11, 9, 26, 18, 14, 15};
+    AVLTree<int, int> t;
+    for (auto e : a)
+    {
+        t.Insert(make_pair(e, e));
+    }
+    t.InOrder();
+    cout << t.IsBalance() << endl;
+    return 0;
+}
+
+// int main()
+//{
+// map<string, string> dict;
+// dict.insert(make_pair("left", "左边"));
+// dict.insert(make_pair("left", "剩余"));
+// dict.insert(make_pair("left", "左边"));
+//
+// for (auto& kv : dict)
+// {
+//  cout << kv.first << ":" << kv.second << endl;
+// }
+//
+//
+//
+// return 0;
+// }
+
+// int main()
+//{
+// //int a[] = { 16, 3, 7, 11, 9, 26, 18, 14, 15 };
+// int a[] = { 4, 2, 6, 1, 3, 5, 15, 7, 16, 14 };
+// AVLTree<int, int> t;
+// for (auto e : a)
+// {
+//  t.Insert(make_pair(e, e));
+// }
+// t.InOrder();
+// cout << t.IsBalance() << endl;
+//
+// return 0;
+// }
+
+/* int main()
+{
+    const int N = 30;
+    vector<int> v;
+    v.reserve(N);
+    // srand(time(0));
+
+    for (size_t i = 0; i < N; i++)
+    {
+        v.push_back(rand());
+        cout << v.back() << endl;
+    }
+
+    AVLTree<int, int> t;
+    for (auto e : v)
+    {
+        if (e == 14604)
+        {
+            int x = 0;
+        }
+
+        t.Insert(make_pair(e, e));
+        cout << "Insert:" << e << "->" << t.IsBalance() << endl;
+    }
+
+    cout << t.IsBalance() << endl;
+
+    return 0;
+} */
+```
+
+```c++
+// avltree.h
+#include <assert.h>
+
+template <class K, class V>
+struct AVLTreeNode
+{
+    AVLTreeNode<K, V> *_left;
+    AVLTreeNode<K, V> *_right;
+    AVLTreeNode<K, V> *_parent;
+    pair<K, V> _kv;
+
+    int _bf; // balance factor
+
+    AVLTreeNode(const pair<K, V> &kv)
+        : _left(nullptr), _right(nullptr), _parent(nullptr), _kv(kv), _bf(0)
+    {
+    }
+};
+
+template <class K, class V>
+class AVLTree
+{
+    typedef AVLTreeNode<K, V> Node;
+
+public:
+    bool Insert(const pair<K, V> &kv)
+    {
+        if (_root == nullptr)
+        {
+            _root = new Node(kv);
+            return true;
+        }
+
+        Node *parent = nullptr;
+        Node *cur = _root;
+
+        while (cur)
+        {
+            if (cur->_kv.first < kv.first)
+            {
+                parent = cur;
+                cur = cur->_right;
+            }
+            else if (cur->_kv.first > kv.first)
+            {
+                parent = cur;
+                cur = cur->_left;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        cur = new Node(kv);
+        if (parent->_kv.first < kv.first)
+        {
+            parent->_right = cur;
+            cur->_parent = parent;
+        }
+        else
+        {
+            parent->_left = cur;
+            cur->_parent = parent;
+        }
+
+        while (parent)
+        {
+            if (cur == parent->_left)
+            {
+                parent->_bf--;
+            }
+            else
+            {
+                parent->_bf++;
+            }
+
+            if (parent->_bf == 0)
+            {
+                break;
+            }
+            else if (parent->_bf == 1 || parent->_bf == -1)
+            {
+                cur = parent;
+                parent = parent->_parent;
+            }
+            else if (parent->_bf == 2 || parent->_bf == -2)
+            {
+                if (parent->_bf == 2 && cur->_bf == 1)
+                {
+                    RotateL(parent);
+                }
+                else if (parent->_bf == -2 && cur->_bf == -1)
+                {
+                    RotateR(parent);
+                }
+                else if (parent->_bf == 2 && cur->_bf == -1)
+                {
+                    RotateRL(parent);
+                }
+                else if (parent->_bf == -2 && cur->_bf == 1)
+                {
+                    RotateLR(parent);
+                }
+
+                // 1、旋转让这颗子树平衡了
+                // 2、旋转降低了这颗子树的高度，恢复到跟插入前一样的高度，所以对上一层没有影响，不用继续更新
+                break;
+            }
+            else
+            {
+                assert(false);
+            }
+        }
+
+        return true;
+    }
+
+    void RotateL(Node *parent)
+    {
+        Node *subR = parent->_right;
+        Node *subRL = subR->_left;
+
+        parent->_right = subRL;
+        subR->_left = parent;
+
+        Node *parentParent = parent->_parent;
+
+        parent->_parent = subR;
+        if (subRL)
+            subRL->_parent = parent;
+
+        if (_root == parent)
+        {
+            _root = subR;
+            subR->_parent = nullptr;
+        }
+        else
+        {
+            if (parentParent->_left == parent)
+            {
+                parentParent->_left = subR;
+            }
+            else
+            {
+                parentParent->_right = subR;
+            }
+
+            subR->_parent = parentParent;
+        }
+
+        parent->_bf = subR->_bf = 0;
+    }
+
+    void RotateR(Node *parent)
+    {
+        Node *subL = parent->_left;
+        Node *subLR = subL->_right;
+
+        parent->_left = subLR;
+        if (subLR)
+            subLR->_parent = parent;
+
+        Node *parentParent = parent->_parent;
+
+        subL->_right = parent;
+        parent->_parent = subL;
+
+        if (_root == parent)
+        {
+            _root = subL;
+            subL->_parent = nullptr;
+        }
+        else
+        {
+            if (parentParent->_left == parent)
+            {
+                parentParent->_left = subL;
+            }
+            else
+            {
+                parentParent->_right = subL;
+            }
+
+            subL->_parent = parentParent;
+        }
+
+        subL->_bf = parent->_bf = 0;
+    }
+
+    void RotateRL(Node *parent)
+    {
+        Node *subR = parent->_right;
+        Node *subRL = subR->_left;
+        int bf = subRL->_bf;
+
+        RotateR(parent->_right);
+        RotateL(parent);
+
+        if (bf == 0)
+        {
+            // subRL自己就是新增
+            parent->_bf = subR->_bf = subRL->_bf = 0;
+        }
+        else if (bf == -1)
+        {
+            // subRL的左子树新增
+            parent->_bf = 0;
+            subRL->_bf = 0;
+            subR->_bf = 1;
+        }
+        else if (bf == 1)
+        {
+            // subRL的右子树新增
+            parent->_bf = -1;
+            subRL->_bf = 0;
+            subR->_bf = 0;
+        }
+        else
+        {
+            assert(false);
+        }
+    }
+
+    void RotateLR(Node *parent)
+    {
+        Node *subL = parent->_left;
+        Node *subLR = subL->_right;
+        int bf = subLR->_bf;
+        RotateL(parent->_left);
+        RotateR(parent);
+        if (bf == 0)
+        {
+            subL->_bf = subLR->_bf = parent->_bf = 0;
+        }
+        else if (bf == 1)
+        {
+            subL->_bf = -1;
+            subLR->_bf = 0;
+            parent->_bf = 0;
+        }
+        else if (bf == -1)
+        {
+            subL->_bf = 0;
+            subLR->_bf = 0;
+            parent->_bf = 1;
+        }
+        else
+        {
+            assert(false);
+        }
+    }
+
+    void InOrder()
+    {
+        _InOrder(_root);
+        cout << endl;
+    }
+
+    void _InOrder(Node *root)
+    {
+        if (root == nullptr)
+            return;
+
+        _InOrder(root->_left);
+        cout << root->_kv.first << " ";
+        _InOrder(root->_right);
+    }
+
+    bool IsBalance()
+    {
+        return _IsBalance(_root);
+    }
+
+    int _Height(Node *root)
+    {
+        // 如果是空树，那么它的高度是 0
+        if (root == nullptr)
+            return 0;
+        // 分别求左右子树的高度
+        int leftHeight = _Height(root->_left);
+        int rightHeight = _Height(root->_right);
+        // 这棵树自己的高度 = 左右子树高的那个 + 1
+        return leftHeight > rightHeight ? leftHeight + 1 : rightHeight + 1;
+    }
+
+    bool _IsBalance(Node *root)
+    {
+        // 首先，空树🌲是 avl 树
+        if (root == nullptr)
+            return true;
+        // 计算左右子树的高度
+        int leftHeight = _Height(root->_left);
+        int rightHeight = _Height(root->_right);
+        if (leftHeight - rightHeight != root->_bf)
+        {
+            cout << root->_kv.first << "平衡因子异常" << endl;
+            return false;
+        }
+        // 计算左右的高度差 ，abs 是求绝对值的
+        return abs(leftHeight - rightHeight) < 2 && _IsBalance(root->_left) && _IsBalance(root->_right);
+    }
+
+private:
+    Node *_root = nullptr;
+};
+
+```
