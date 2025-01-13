@@ -57,6 +57,7 @@ public:
         }
 
         cur = new Node(kv);
+        cur->_col = RED;
         if (parent->_kv.first < kv.first)
         {
             parent->_kv.first < kv.first;
